@@ -18,7 +18,7 @@ import random
 random.seed(1984)
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--model", help="model to train with, CNN, BLSTM or CNN-BLSTM")
+parser.add_argument("--model", help="model to train with, CNN, BLSTM or CNN-BLSTM ResNet-BLSTM", default='ResNet-BLSTM')
 parser.add_argument("--epoch", type=int, default=100, help="number epochs")
 parser.add_argument("--batch_size", type=int, default=64, help="number batch_size")
 
@@ -88,8 +88,10 @@ elif args.model == 'BLSTM':
     MOSNet = model.BLSTM()
 elif args.model == 'CNN-BLSTM':
     MOSNet = model.CNN_BLSTM()
+elif args.model == 'ResNet-BLSTM':
+    MOSNet = model.ResNet_BLSTM()
 else:
-    raise ValueError('please specify model to train with, CNN, BLSTM or CNN-BLSTM')
+    raise ValueError('please specify model to train with, CNN, BLSTM, CNN-BLSTM, or ResNet-BLSTM')
 
 model = MOSNet.build()
 

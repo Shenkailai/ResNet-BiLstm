@@ -64,11 +64,11 @@ test_list= mos_list[-NUM_TEST:]
 print('{} for training; {} for valid; {} for testing'.format(NUM_TRAIN, NUM_VALID, NUM_TEST))    
 
 # init model
-MOSNet = model.CNN_BLSTM()
+MOSNet = model.ResNet_BLSTM()
 model = MOSNet.build()
 
 # load pre-trained weights
-model.load_weights(os.path.join(PRE_TRAINED_DIR, 'cnn_blstm.h5'))   # Load the best model   
+model.load_weights(os.path.join(PRE_TRAINED_DIR, 'nisqa_ResNet-BLSTM.h5'))   # Load the best model   
 
 
 

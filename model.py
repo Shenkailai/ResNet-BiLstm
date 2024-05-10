@@ -1,9 +1,56 @@
 import tensorflow
+from keras.layers import ELU, BatchNormalization
 from tensorflow import keras
 from tensorflow.keras import Model, layers
 from tensorflow.keras.layers import Dense, Dropout, Conv2D
-from tensorflow.keras.layers import LSTM, TimeDistributed, Bidirectional
+from tensorflow.keras.layers import LSTM, TimeDistributed, Bidirectional, MultiHeadAttention
 from tensorflow.keras.constraints import max_norm
+
+def block(x, filters):
+    res = x
+    pre_res = (Conv2D(filters, (3, 3), strides=(1, 3), activation='relu', padding='same'))(res)
+    conv1 = (Conv2D(filters, (3, 3), strides=(1, 1), activation='relu', padding='same'))(x)
+    conv1 = BatchNormalization()(conv1)
+    conv1 = (Conv2D(filters, (3, 3), strides=(1, 1), activation='relu', padding='same'))(conv1)
+    conv1 = (Conv2D(filters, (3, 3), strides=(1, 3), activation='relu', padding='same'))(conv1)
+    out = keras.layers.add([pre_res, conv1])
+    return out
+
+
+class ResNet_BLSTM(object):
+
+    def __init__(self):
+        print('ResNet_BLSTM init')
+
+    def build(self):
+        _input = keras.Input(shape=(None, 257))
+
+        re_input = layers.Reshape((-1, 257, 1), input_shape=(-1, 257))(_input)
+        # # resnet
+        res1 = block(re_input, 16)
+        res2 = block(res1, 32)
+        res3 = block(res2, 64)
+        res4 = block(res3, 128)
+        re_shape = layers.Reshape((-1, 4 * 128), input_shape=(-1, 4, 128))(res4)
+
+        # BLSTM
+        blstm1 = Bidirectional(
+            LSTM(128, return_sequences=True, dropout=0.3,
+                 recurrent_constraint=max_norm(0.00001)),
+            merge_mode='concat')(re_shape)
+        atten1 = MultiHeadAttention(num_heads=1, key_dim=256)(blstm1, blstm1, blstm1)
+        # DNN
+        flatten = TimeDistributed(layers.Flatten())(atten1)
+        dense1 = TimeDistributed(Dense(128, activation='relu'))(flatten)
+        dense1 = Dropout(0.3)(dense1)
+
+        frame_score = TimeDistributed(Dense(1), name='frame')(dense1)
+
+        average_score = layers.GlobalAveragePooling1D(name='avg')(frame_score)
+
+        model = Model(outputs=[average_score, frame_score], inputs=_input)
+
+        return model
 
 class CNN_BLSTM(object):
     
